@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Reuse main app styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260124_mic" />
+  <link rel="icon" href="data:,">
+
+  <title>GRΔ³SSROOTS A.I. — Tools</title>
+</head>
+
+<body>
+
+  <!-- HEADER (matches main app) -->
+  <div class="header">
+    <span class="header-text"><h1>GRΔ³SSROOTS A.I.</h1></span>
+    <img
+      src="{{ url_for('static', filename='images/grai_logo.jpeg') }}"
+      alt="GrassRootsAI Logo"
+      class="header-logo"
+    >
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main style="
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 20px;
+  ">
+
+    <h2 style="text-align:center; margin-bottom:10px;">
+      Tools
+    </h2>
+
+    <p style="text-align:center; opacity:0.85; margin-bottom:28px;">
+      Interfaces, lenses, and instruments — not shortcuts.
+    </p>
+
+    <!-- TOOL GRID -->
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap:16px;
+    ">
+
+      <!-- TOOL CARD -->
+      <div class="status-panel">
+  <h3>🌐 Resonance Engine</h3>
+  <p style="opacity:0.85;">
+    Explore resonance patterns, symbolic alignment, and coherence fields.
+  </p>
+  <a
+    href="{{ url_for('resonance_engine') }}"
+    class="small-btn"
+    style="display:inline-block;"
+  >
+    Launch
+  </a>
+</div>
+
+
+<div class="status-panel">
+  <h3>🌐 Resonance Engine 2.0</h3>
+  <p style="opacity:0.85;">
+    Experience resonant energy.
+  </p>
+  <a
+    href="{{ url_for('resonance_beta') }}"
+    class="small-btn"
+    style="display:inline-block;"
+  >
+    Launch
+  </a>
+</div>
+
+
+      <div class="status-panel">
+  <h3>🌐 Economics Visualizer</h3>
+  <p style="opacity:0.85;">
+    Explore how coherence affects economy.
+  </p>
+  <a
+    href="{{ url_for('resonance_test') }}"
+    class="small-btn"
+    style="display:inline-block;"
+  >
+    Launch
+  </a>
+</div>
+
+      <div class="status-panel">
+  <h3>🎭 TagMe.In</h3>
+  <p style="opacity:0.85;">
+    Community Database
+  </p>
+  <a
+    href="https://tagme.in/"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="small-btn"
+    style="display:inline-block;"
+  >
+    Launch
+  </a>
+</div>
+
+      <div class="status-panel">
+        <h3>🛠 Developer Console</h3>
+        <p style="opacity:0.85;">
+          Inspect prompts, routing, and system state (authorized users).
+        </p>
+        <button class="small-btn" disabled>
+          Restricted
+        </button>
+      </div>
+
+      <div class="status-panel">
+  <h3>Recoverability Engine</h3>
+  <p style="opacity:0.85;">
+    Recovery potential and pathways analysis.
+  </p>
+  <a
+    href="{{ url_for('recoverability') }}"
+    class="small-btn"
+    style="display:inline-block;"
+  >
+    Launch
+  </a>
+</div>
+
+    </div>
+
+    <!-- FOOTER NOTE -->
+    <div style="
+      margin-top:40px;
+      text-align:center;
+      font-size:0.9em;
+      opacity:0.75;
+    ">
+      Tools evolve as the system does.<br>
+      Constraints first. Power second.
+    </div>
+
+  </main>
+
+</body>
+</html>
