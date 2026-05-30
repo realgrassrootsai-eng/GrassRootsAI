@@ -1,0 +1,945 @@
+<!-- templates/chat.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260402_contextfix" />
+  <link rel="icon" href="data:,">
+  <title>GRΔ³SSROOTS A.I.</title>
+</head>
+
+<body>
+
+  <!-- AGE VERIFICATION MODAL -->
+  <div id="age-verification-modal">
+    <div class="age-modal-content">
+      <h2>Age Verification</h2>
+      <p>Confirm your age group to continue.</p>
+      <div class="age-buttons">
+        <button class="age-btn" id="confirm-18" type="button" onclick="GR_setAge('18plus')">18+</button>
+        <button class="age-btn" id="under-18" type="button" onclick="GR_setAge('under18')">Under 18</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="header">
+    
+    <img
+      src="{{ url_for('static', filename='images/grailogo.jpeg') }}"
+      alt="GrassRootsAI Logo"
+      class="header-logo"
+    >
+  </div>
+
+  <!-- MOBILE TABS -->
+  <div class="mobile-tabs">
+    <button type="button" class="tab-btn" data-tab="stats">Login</button>
+    <button type="button" class="tab-btn active" data-tab="chat">Chat</button>
+    <button type="button" class="tab-btn" data-tab="modes">Modes</button>
+  </div>
+
+  <div class="main-layout">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="left-sidebar" id="panel-stats">
+      <div class="sidebar-section">
+        <h3>📊 Session Stats</h3>
+
+        <div class="status-panel">
+          <div class="status-item">
+            <span>Messages:</span>
+            <span id="msg-count">0</span>
+          </div>
+          <div class="status-item" style="border-bottom:none;">
+            <span>Last Active:</span>
+            <span id="last-active">---</span>
+          </div>
+        </div>
+
+        <div class="status-panel" style="margin-top: 14px;">
+          <div class="status-item">
+            <span>Age Group:</span>
+            <span id="age-status">---</span>
+          </div>
+          <div class="status-item" style="border-bottom:none;">
+            <span>Auth:</span>
+            <span id="auth-status">Guest</span>
+          </div>
+        </div>
+
+        <button
+          id="reset-age"
+          class="small-btn"
+          type="button"
+          style="margin-top:12px; width:100%;"
+          onclick="GR_resetAge()"
+        >
+          Reset Age Verification
+        </button>
+
+        <button
+          id="clear-guest"
+          class="small-btn"
+          type="button"
+          style="margin-top:10px; width:100%;"
+          onclick="GR_clearGuestContext()"
+        >
+          Clear Guest Context
+        </button>
+
+        <hr style="margin: 16px 0; border: none; border-top: 1px solid #2f73ff; opacity: 0.5;" />
+
+        <!-- AUTH PANEL -->
+        <div class="auth-panel">
+          <h3>🔐 Account</h3>
+
+          <div id="auth-logged-in" style="display:none;">
+            <div class="status-panel" style="margin-top: 10px;">
+              <div class="status-item" style="border-bottom:none;">
+                <span>Status:</span>
+                <strong>Logged in</strong>
+              </div>
+            </div>
+            <button class="auth-btn" type="button" onclick="GR_logout()">Logout</button>
+          </div>
+
+          <div id="auth-logged-out">
+            <input class="auth-input" id="auth-email" type="email" placeholder="Email" autocomplete="email" />
+            <input class="auth-input" id="auth-password" type="password" placeholder="Password" autocomplete="current-password" />
+
+            <div class="auth-row">
+              <button class="auth-btn" type="button" onclick="GR_signup()">Sign Up</button>
+              <button class="auth-btn" type="button" onclick="GR_login()">Login</button>
+            </div>
+
+            <div id="auth-msg" class="auth-msg"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER CHAT -->
+    <main class="main-chat" id="panel-chat">
+      <div id="first-run-hint" class="first-run-hint">
+        <h1 style="text-align:center;">Aloha — welcome.</h1>
+
+        <p><h2>This is a place to think out loud.</h2></p>
+
+        <p>You don’t need the right words.</p>
+        <p>You don’t need a plan.</p>
+        <p>Just start where you are.</p>
+
+        <p>GrassRootsAI adapts to how you want to engage,</p>
+        <p>reflective, analytical, supportive, or playful —</p>
+        <p>without pushing you toward an outcome.</p>
+
+        <p>When you're ready, type anything below.</p>
+      </div>
+
+      <div class="chat-output" id="chat-box">
+        <div class="chat-message ai">Hi, I'm ANΔ³BELLE (Anabelle or Ana for short). Help me get to know you more. The more that you do, our experience will only get better and better. By default, my "vibe" or MODE of communicating with you is "Normal". If you're interested in a different vibe, try clicking on any of the other available MODES at top right. You can change modes at anytime, on-the-fly, no limits. Just remember, no matter who you are, I am here for you.</div>
+      </div>
+
+      <div id="thinking-indicator" class="thinking-indicator" style="display:none;">
+        ANΔ³BELLE is thinking<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+      </div>
+
+      <div class="input-bar">
+        <div class="input-container">
+          <button id="mic-btn" class="mic-btn" type="button" title="Click to start/stop dictation">
+            🎤
+          </button>
+
+          <textarea
+            id="user-input"
+            placeholder="Ask or share anything with ANΔ³BELLE..."
+            autocomplete="off"
+            onkeydown="GR_onInputKeydown(event)"
+            rows="3"
+></textarea>
+          <button id="send-btn" type="button" onclick="GR_send()">Send</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin-top:10px; justify-content:flex-start;">
+          <label for="image-upload" style="background:#c792ea; color:#0f0f1a; padding:8px 15px; border-radius:20px; cursor:pointer; font-size:0.9rem; font-weight:bold; display:inline-block;">
+            📷 Upload Image
+          </label>
+          <input type="file" id="image-upload" accept="image/*" style="display:none;">
+          <span id="image-name" style="color:#c792ea; font-size:0.9rem;"></span>
+          <button id="clear-image" type="button" style="background:none; border:none; color:#ff6b6b; cursor:pointer; display:none; font-size:0.9rem;">✕ Clear</button>
+
+          <div id="image-preview-container" style="display:none; margin-left:10px;">
+            <img id="image-preview" style="max-width:60px; max-height:60px; border-radius:8px; border:2px solid #c792ea;">
+          </div>
+        </div>
+
+        <div id="mic-status" class="mic-status" aria-live="polite"></div>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="right-sidebar" id="panel-modes">
+      <div class="sidebar-section">
+
+        <div style="
+          display:flex;
+          justify-content:center;
+          gap:10px;
+          margin-bottom:12px;
+          flex-wrap:wrap;
+        ">
+        
+          <a
+            href="/tools"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="small-btn"
+            style="opacity:0.85;"
+          >
+            SIMULATIONS
+          </a>
+        </div>
+
+        <h3>⚙ Mode Settings</h3>
+
+        <div class="command-grid">
+          <button class="mode-btn active" id="normal-mode" type="button" onclick="GR_setMode('Normal')">Normal</button>
+          <button class="mode-btn" id="therapy-mode" type="button" onclick="GR_setMode('Therapy')">Therapy</button>
+          <button class="mode-btn" id="science-mode" type="button" onclick="GR_setMode('Science')">Science</button>
+          <button class="mode-btn" id="philosophy-mode" type="button" onclick="GR_setMode('Philosophy')">Philosophy</button>
+          <button class="mode-btn" id="comedy-mode" type="button" onclick="GR_setMode('Comedy')">Comedy</button>
+        </div>
+
+        <div class="mode-settings-viewport">
+          Current Mode: <strong><span id="current-mode">Normal</span></strong>
+          <span id="comedy-tier-label" style="opacity:.85;"></span>
+        </div>
+
+        <img
+          class="sidebar-filler-img"
+          src="{{ url_for('static', filename='images/anabelle_corner.png') }}"
+          alt="Anabelle"
+        />
+        <br><b><a style="color: cyan;" href="mailto:realgrassrootsai@gmail.com">realgrassrootsai@gmail.com</a></b>
+      </div>
+      <br>
+      <div><a
+  href="/chatinfo"
+  target="_blank"
+  rel="noopener noreferrer"
+  class="small-btn"
+  style="opacity:0.85;"
+>
+  About Δ³
+</a></div>
+    </aside>
+  </div>
+
+  <script>
+    // ===================== LocalStorage Keys =====================
+    const LS_GUEST_SESSION = "grassroots_guest_session_id";
+    const LS_TOKEN = "grassroots_session_token";
+    const LS_AGE = "grassroots_age_group";
+    const LS_MODE = "grassroots_mode";
+    const LS_PAST_CONTEXT = "grassroots_past_context";
+
+    function $(id){ return document.getElementById(id); }
+
+    function GR_showThinking(){
+      const el = $("thinking-indicator");
+      if (el) el.style.display = "block";
+    }
+
+    function GR_hideThinking(){
+      const el = $("thinking-indicator");
+      if (el) el.style.display = "none";
+    }
+
+    function GR_getGuestSessionId() {
+      let id = localStorage.getItem(LS_GUEST_SESSION);
+      if (!id) {
+        id = (crypto?.randomUUID)
+          ? "guest_" + crypto.randomUUID()
+          : "guest_" + Math.random().toString(36).slice(2);
+        localStorage.setItem(LS_GUEST_SESSION, id);
+      }
+      return id;
+    }
+
+    function hideFirstRunHint() {
+      const hint = $("first-run-hint");
+      if (hint) hint.remove();
+    }
+
+    // ===================== State =====================
+    let GR_mode = "Normal";
+    let GR_msgCount = 0;
+    let currentImageBase64 = null;
+    let pastContext = [];
+
+    // ===================== Context Memory =====================
+    function GR_loadPastContext() {
+      try {
+        const raw = localStorage.getItem(LS_PAST_CONTEXT);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed)) {
+          pastContext = parsed
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+              role: (item.role === "assistant" || item.role === "system") ? item.role : "user",
+              content: String(item.content || "").trim()
+            }))
+            .filter(item => item.content);
+        } else {
+          pastContext = [];
+        }
+      } catch (e) {
+        console.warn("Could not load past context:", e);
+        pastContext = [];
+      }
+    }
+
+    function GR_savePastContext() {
+      try {
+        localStorage.setItem(LS_PAST_CONTEXT, JSON.stringify(pastContext.slice(-40)));
+      } catch (e) {
+        console.warn("Could not save past context:", e);
+      }
+    }
+
+    function GR_pushPastContext(role, content) {
+      const cleanContent = String(content || "").trim();
+      if (!cleanContent) return;
+
+      pastContext.push({
+        role: role === "assistant" ? "assistant" : "user",
+        content: cleanContent
+      });
+
+      if (pastContext.length > 40) {
+        pastContext = pastContext.slice(-40);
+      }
+
+      GR_savePastContext();
+    }
+
+    function GR_clearPastContextLocal() {
+      pastContext = [];
+      localStorage.removeItem(LS_PAST_CONTEXT);
+    }
+
+    // ===================== Stats =====================
+    function GR_updateStats(){
+      const msg = $("msg-count");
+      const last = $("last-active");
+      if (msg) msg.textContent = String(GR_msgCount);
+      if (last) last.textContent = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    }
+
+    function GR_addMessage(text, who, storeInContext = true){
+      const box = $("chat-box");
+      if (!box) return;
+
+      const div = document.createElement("div");
+      div.className = "chat-message " + (who === "user" ? "user" : "ai");
+      div.textContent = String(text || "");
+      box.appendChild(div);
+
+      if (storeInContext) {
+        GR_pushPastContext(who === "user" ? "user" : "assistant", text);
+      }
+
+      if (who === "user") {
+        setTimeout(() => {
+          div.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 60);
+      }
+
+      GR_msgCount++;
+      GR_updateStats();
+    }
+
+    // ===================== Age Gate =====================
+    function GR_hideAgeModal(){
+      const modal = $("age-verification-modal");
+      if (modal) modal.classList.add("hidden");
+      const input = $("user-input");
+      const send = $("send-btn");
+      const mic = $("mic-btn");
+      if (input) input.disabled = false;
+      if (send) send.disabled = false;
+      if (mic) mic.disabled = false;
+      if (input) input.focus();
+    }
+
+    function GR_showAgeModal(){
+      const modal = $("age-verification-modal");
+      if (modal) modal.classList.remove("hidden");
+      const input = $("user-input");
+      const send = $("send-btn");
+      const mic = $("mic-btn");
+      if (input) input.disabled = true;
+      if (send) send.disabled = true;
+      if (mic) mic.disabled = true;
+    }
+
+    function GR_setAge(v){
+      localStorage.setItem(LS_AGE, v);
+      GR_refreshStatus();
+      GR_refreshComedyUI();
+      GR_hideAgeModal();
+    }
+
+    function GR_resetAge(){
+      localStorage.removeItem(LS_AGE);
+      GR_refreshStatus();
+      GR_refreshComedyUI();
+      GR_showAgeModal();
+    }
+
+    function GR_refreshStatus(){
+      const age = localStorage.getItem(LS_AGE);
+      const ageEl = $("age-status");
+      if (ageEl) ageEl.textContent =
+        age === "under18" ? "Under 18" :
+        (age === "18plus" ? "18+" : "---");
+
+      const authEl = $("auth-status");
+      if (authEl) authEl.textContent = localStorage.getItem(LS_TOKEN) ? "Logged in" : "Guest";
+    }
+
+    // ===================== Mode Handling =====================
+    function GR_refreshComedyUI() {
+      const age = localStorage.getItem(LS_AGE);
+      const label = $("comedy-tier-label");
+      const btn = $("comedy-mode");
+
+      const tierText = (age === "18plus") ? " (18+)" : (age === "under18") ? " (Clean)" : "";
+      if (btn) btn.textContent = "Comedy" + tierText;
+      if (label) {
+        if (GR_mode === "Comedy" && tierText) label.textContent = " — Tier:" + tierText.trim();
+        else label.textContent = "";
+      }
+    }
+
+    function GR_setMode(mode){
+      GR_mode = mode;
+      localStorage.setItem(LS_MODE, mode);
+
+      const cm = $("current-mode");
+      if (cm) cm.textContent = mode;
+
+      ["normal","therapy","science","philosophy","comedy"].forEach(m => {
+        const btn = $(m + "-mode");
+        if (!btn) return;
+        btn.classList.toggle("active", mode.toLowerCase() === m);
+      });
+
+      GR_refreshComedyUI();
+    }
+
+    function GR_restoreMode(){
+      const saved = localStorage.getItem(LS_MODE);
+      if (saved) GR_setMode(saved);
+      else GR_setMode("Normal");
+    }
+
+    // ===================== Network Helpers =====================
+    async function GR_postJSON(url, payload){
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      const ct = res.headers.get("content-type") || "";
+
+      if (ct.includes("application/json")) {
+        data = await res.json().catch(() => ({}));
+      } else {
+        const text = await res.text().catch(() => "");
+        data = { raw: text };
+      }
+
+      if (!res.ok) {
+        const msg = (data && (data.error || data.message || data.response)) || data.raw || ("HTTP " + res.status);
+        throw new Error(msg);
+      }
+
+      return data || {};
+    }
+
+    // ===================== Image Upload =====================
+    document.addEventListener('DOMContentLoaded', function() {
+      const imageUpload = $('image-upload');
+      const imageName = $('image-name');
+      const clearImage = $('clear-image');
+
+      if (imageUpload) {
+        imageUpload.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          imageName.textContent = `📎 ${file.name}`;
+          if (clearImage) clearImage.style.display = 'inline';
+
+          if (file.size > 5 * 1024 * 1024) {
+            alert('Image is too large. Please use images under 5MB.');
+            imageUpload.value = '';
+            imageName.textContent = '';
+            if (clearImage) clearImage.style.display = 'none';
+            currentImageBase64 = null;
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            currentImageBase64 = event.target.result;
+            console.log('✅ Image loaded, size:', Math.round(currentImageBase64.length / 1024), 'KB');
+
+            const previewContainer = $('image-preview-container');
+            const previewImg = $('image-preview');
+            if (previewContainer && previewImg) {
+              previewImg.src = currentImageBase64;
+              previewContainer.style.display = 'inline-block';
+            }
+          };
+          reader.onerror = function() {
+            alert('Error reading image file');
+            currentImageBase64 = null;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (clearImage) {
+        clearImage.addEventListener('click', function() {
+          if (imageUpload) imageUpload.value = '';
+          if (imageName) imageName.textContent = '';
+          clearImage.style.display = 'none';
+          currentImageBase64 = null;
+
+          const previewContainer = $('image-preview-container');
+          if (previewContainer) previewContainer.style.display = 'none';
+
+          console.log('✅ Image cleared');
+        });
+      }
+    });
+
+    // ===================== Send =====================
+    async function GR_send(){
+      const age = localStorage.getItem(LS_AGE);
+      if (!age){
+        GR_showAgeModal();
+        return;
+      }
+
+      const input = $('user-input');
+      const text = (input?.value || "").trim();
+      if (!text && !currentImageBase64) return;
+
+      hideFirstRunHint();
+
+      if (text) {
+        GR_addMessage(text, "user", true);
+      }
+
+      GR_showThinking();
+      if (input) {
+        input.value = "";
+        input.style.height = "auto";
+      }
+
+      const token = localStorage.getItem(LS_TOKEN) || null;
+
+      const payload = {
+        message: text,
+        mode: GR_mode,
+        age_group: age,
+        session_token: token,
+        guest_session_id: token ? null : GR_getGuestSessionId(),
+        actor_type: token ? "personal" : "guest",   // Force personal when logged in
+        is_personal: !!token,                       // Explicit flag
+        past_context: pastContext,
+        emotional_context: "",
+        challenge_pref: "off"
+      };
+
+      if (currentImageBase64) {
+        payload.image_data = currentImageBase64;
+        console.log('📤 Sending with image_data, length:', currentImageBase64.length);
+      } else {
+        console.log('📤 Sending without image');
+      }
+
+      console.log("PAST CONTEXT FRONTEND:", pastContext);
+
+      try {
+        const data = await GR_postJSON("/chat", payload);
+        const reply = data.response ?? data.reply ?? data.message ?? "[No response]";
+        GR_addMessage(reply, "ai", true);
+        GR_hideThinking();
+
+        // 🔥 Auto-play TTS with fallback
+if (data.audio_file) {
+    console.log("🎵 Auto-playing TTS:", data.audio_file);
+
+    let audioUrl = data.audio_file;
+    if (!audioUrl.startsWith('/static/')) {
+        audioUrl = '/static/' + audioUrl.replace(/^\/+/, '');
+    }
+
+    // 🚫 Kill caching issues (VERY important)
+    audioUrl += "?t=" + Date.now();
+
+    const audio = new Audio(audioUrl);
+
+    audio.play().catch(err => {
+        console.warn("Auto-play blocked, showing fallback button:", err);
+
+        const playBtn = document.createElement("button");
+        playBtn.textContent = "🔊 Play Voice";
+        playBtn.style.marginTop = "8px";
+        playBtn.style.padding = "8px 16px";
+        playBtn.style.background = "#c792ea";
+        playBtn.style.color = "#0f0f1a";
+        playBtn.style.border = "none";
+        playBtn.style.borderRadius = "20px";
+        playBtn.style.cursor = "pointer";
+        playBtn.style.fontWeight = "bold";
+
+        playBtn.onclick = () => {
+            const retryAudio = new Audio(audioUrl);
+            retryAudio.play();
+            playBtn.remove();
+        };
+
+        const chatBox = $("chat-box");
+        if (chatBox) {
+            const lastMessage = chatBox.lastElementChild;
+            if (lastMessage) lastMessage.appendChild(playBtn);
+        }
+    });
+}
+      } catch (e) {
+        GR_hideThinking();
+        GR_addMessage("[ERROR] " + (e.message || e), "ai", false);
+      }
+    }
+
+    function GR_onInputKeydown(e){
+
+      // ENTER = send
+      if (e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        GR_send();
+        return;
+      }
+
+      // Auto-expand textarea height
+      setTimeout(() => {
+        const input = $('user-input');
+        if (!input) return;
+
+        input.style.height = "auto";
+        input.style.height = input.scrollHeight + "px";
+      }, 0);
+    }
+
+    // ===================== Guest Context Clear =====================
+    async function GR_clearGuestContext(){
+      if (localStorage.getItem(LS_TOKEN)) {
+        GR_addMessage("⚠️ Guest context can’t be cleared while logged in.", "ai", false);
+        return;
+      }
+
+      try {
+        GR_addMessage("🧹 Clearing guest context…", "ai", false);
+
+        await GR_postJSON("/memory/clear", {
+          actor_type: "guest",
+          guest_session_id: GR_getGuestSessionId()
+        });
+
+        GR_clearPastContextLocal();
+
+        GR_msgCount = 0;
+        GR_updateStats();
+
+        const box = $("chat-box");
+        if (box) {
+          box.innerHTML = "";
+          GR_addMessage("Welcome! I am ANA³BELLE. Select a mode to begin.", "ai", false);
+        }
+      } catch (e) {
+        GR_addMessage("[ERROR] Could not clear guest context: " + (e.message || e), "ai", false);
+      }
+    }
+
+    // ===================== Auth =====================
+function GR_setAuthMsg(text, ok = true){
+  const el = $('auth-msg');
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.color = ok ? "#1b5e20" : "#b71c1c";
+}
+
+function GR_refreshAuthUI(){
+  const token = localStorage.getItem(LS_TOKEN);
+  const inEl = $('auth-logged-in');
+  const outEl = $('auth-logged-out');
+
+  if (inEl) inEl.style.display = token ? "block" : "none";
+  if (outEl) outEl.style.display = token ? "none" : "block";
+  if (!token) GR_setAuthMsg("");
+
+  const clearBtn = $('clear-guest');
+  if (clearBtn) clearBtn.style.display = token ? "none" : "block";
+}
+
+async function GR_signup(){
+  try {
+    const email = ($('auth-email')?.value || "").trim();
+    const password = ($('auth-password')?.value || "").trim();
+
+    if (!email || !password) {
+      GR_setAuthMsg("Email and password required.", false);
+      return;
+    }
+
+    GR_setAuthMsg("Creating account...");
+    const data = await GR_postJSON("/signup", { email, password });
+
+    if (!data.session_token) {
+      GR_setAuthMsg("Signup succeeded but no session token returned.", false);
+      return;
+    }
+
+    localStorage.setItem(LS_TOKEN, data.session_token);
+    GR_clearPastContextLocal();
+    GR_setAuthMsg("Signup successful.");
+    GR_refreshAuthUI();
+    GR_refreshStatus();
+
+  } catch (e) {
+    console.error("Signup failed:", e);
+    GR_setAuthMsg("Signup failed: " + (e.message || e), false);
+  }
+}
+
+async function GR_login(){
+  try {
+    const email = ($('auth-email')?.value || "").trim();
+    const password = ($('auth-password')?.value || "").trim();
+
+    if (!email || !password) {
+      GR_setAuthMsg("Email and password required.", false);
+      return;
+    }
+
+    GR_setAuthMsg("Logging in...");
+    const data = await GR_postJSON("/login", { email, password });
+
+    if (!data.session_token) {
+      GR_setAuthMsg("Login succeeded but no session token returned.", false);
+      return;
+    }
+
+    localStorage.setItem(LS_TOKEN, data.session_token);
+    GR_clearPastContextLocal();
+    GR_setAuthMsg("Login successful.");
+    GR_refreshAuthUI();
+    GR_refreshStatus();
+
+  } catch (e) {
+    console.error("Login failed:", e);
+    GR_setAuthMsg("Login failed: " + (e.message || e), false);
+  }
+}
+
+function GR_logout(){
+  localStorage.removeItem(LS_TOKEN);
+  GR_setAuthMsg("Logged out.");
+  GR_refreshAuthUI();
+  GR_refreshStatus();
+}
+
+// ===================== Mobile Tabs =====================
+(function () {
+  const tabs = document.querySelectorAll(".tab-btn");
+  if (!tabs.length) return;
+
+  function setTab(tab) {
+    document.body.classList.remove("show-chat", "show-stats", "show-modes");
+    document.body.classList.add("show-" + tab);
+    tabs.forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  }
+
+  tabs.forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
+  setTab("chat");
+})();
+
+    // ===================== MIC =====================
+    (function initMic() {
+      const micBtn = $('mic-btn');
+      const micStatus = $('mic-status');
+      const inputEl = $('user-input');
+
+      if (!micBtn || !inputEl) return;
+
+      function setStatus(text) {
+        if (micStatus) micStatus.textContent = text || "";
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        micBtn.disabled = true;
+        micBtn.title = "Speech recognition not supported in this browser";
+        setStatus("Mic not supported.");
+        return;
+      }
+
+      if (location.protocol !== "https:" && location.hostname !== "localhost") {
+        micBtn.disabled = true;
+        micBtn.title = "Microphone requires HTTPS (or localhost)";
+        setStatus("Mic requires HTTPS (or localhost).");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      let isListening = false;
+      let finalTranscript = "";
+      let baseText = "";
+
+      function startListening() {
+        const age = localStorage.getItem(LS_AGE);
+        if (!age) {
+          GR_showAgeModal();
+          return;
+        }
+
+        baseText = (inputEl.value || "").trim();
+        finalTranscript = "";
+        inputEl.value = baseText;
+        isListening = true;
+        micBtn.classList.add("listening");
+        setStatus("Listening…");
+
+        try { recognition.start(); } catch (e) {}
+      }
+
+      function stopListening() {
+        isListening = false;
+        micBtn.classList.remove("listening");
+        setStatus("");
+        try { recognition.stop(); } catch (e) {}
+      }
+
+      micBtn.addEventListener("click", () => {
+        if (isListening) stopListening();
+        else startListening();
+      });
+
+      recognition.onresult = (event) => {
+        let interim = "";
+        finalTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const txt = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalTranscript += txt;
+          else interim += txt;
+        }
+
+        let displayText = baseText;
+        if (finalTranscript || interim) {
+          if (displayText) displayText += " ";
+          displayText += finalTranscript + interim;
+        }
+
+        displayText = displayText
+          .replace(/\b1\b/g, "one")
+          .replace(/\b2\b/g, "two")
+          .replace(/\b3\b/g, "three");
+
+        inputEl.value = displayText.trim();
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+      };
+
+      recognition.onerror = (event) => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+
+        if (event.error === "not-allowed") setStatus("Mic permission denied.");
+        else if (event.error === "no-speech") setStatus("No speech detected.");
+        else setStatus("Mic error: " + event.error);
+
+        setTimeout(stopListening, 800);
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+        setStatus("");
+
+        if (finalTranscript && inputEl.value.trim() === baseText) {
+          inputEl.value = (baseText ? baseText + " " : "") + finalTranscript.trim();
+        }
+      };
+    })();
+
+    // ===================== Init =====================
+    GR_loadPastContext();
+    GR_updateStats();
+    GR_refreshStatus();
+    GR_refreshAuthUI();
+    GR_restoreMode();
+    GR_refreshComedyUI();
+
+    if (!localStorage.getItem(LS_AGE)) GR_showAgeModal();
+    else GR_hideAgeModal();
+
+    function speakAnabelle(text) {
+      fetch('/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: text })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('TTS request failed: ' + response.status);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audio.play().catch(e => {
+          console.error("Auto-play blocked:", e);
+          alert("Click to hear Anabelle: " + text);
+        });
+      })
+      .catch(error => {
+        console.error('TTS error:', error);
+        alert("Couldn't play voice: " + error.message);
+      });
+    }
+
+    function handleAnabelleReply(replyText) {
+      speakAnabelle(replyText);
+    }
+  </script>
+<!-- Cloudflare Web Analytics -->
+ <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bb060bd9efc5479f98276b92f55fb1d6"}'></script>
+ <!-- End Cloudflare Web Analytics -->
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recoverability Engine</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <script src="static/js/recoverability_bridge.js"></script>
+
+  <style>
+    :root {
+      --bg: #071018;
+      --bg2: #0b1622;
+      --panel: rgba(10, 18, 28, 0.88);
+      --panel2: rgba(15, 25, 38, 0.88);
+      --border: rgba(255,255,255,0.10);
+      --text: #eaf2ff;
+      --muted: #9cb0c3;
+      --accent: #79dfff;
+      --good: #86ffb1;
+      --warn: #ffd36b;
+      --danger: #ff8a8a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at top, #102033 0%, #0a1420 48%, #050a12 100%);
+      color: var(--text);
+      font-family: "Roboto", sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 10, 18, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .titleblock h1 {
+      margin: 0;
+      font-family: "Cinzel Decorative", serif;
+      font-size: 20px;
+      color: var(--accent);
+      letter-spacing: 0.4px;
+    }
+
+    .titleblock p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.10);
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      min-height: 0;
+    }
+
+    .sidebar {
+      padding: 14px;
+      overflow-y: auto;
+      background: rgba(8, 14, 22, 0.70);
+    }
+
+    .sidebar.left {
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar.right {
+      border-left: 1px solid var(--border);
+    }
+
+    .center {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      background:
+        radial-gradient(circle at center, rgba(121,223,255,0.05) 0%, rgba(0,0,0,0) 55%);
+    }
+
+    #sim-holder {
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+
+    .metric-label {
+      color: var(--muted);
+    }
+
+    .metric-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .component-row {
+      margin-bottom: 10px;
+    }
+
+    .component-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .bar {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(121,223,255,0.85), rgba(134,255,177,0.85));
+      transition: width 0.12s linear;
+    }
+
+    .status-pill {
+      display: inline-block;
+      min-width: 84px;
+      text-align: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+    }
+
+    .legend-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #cfe5ff;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="titleblock">
+      <h1>Recoverability Engine</h1>
+      <p>RDI · Momentum · Phase Lag · Vector-Aware Governance</p>
+    </div>
+
+    <div class="controls">
+      <button id="btnShock" disabled title="Shocks originate from the source sim">Source Sim Controls Shock</button>
+      <button id="btnGovernor">Governor: ON</button>
+      <button id="btnGovernanceMode" class="control-btn safe-mode">
+  SAFE MODE
+</button>
+      <button id="btnReset">Reset</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar left">
+      <div class="panel">
+        <h2>Live Metrics</h2>
+
+        <div class="metric-row">
+          <span class="metric-label">RDI</span>
+          <span class="metric-value" id="rdiValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+  <span class="metric-label">Stable Threshold</span>
+  <span class="metric-value" id="thresholdStableValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Warning Threshold</span>
+  <span class="metric-value" id="thresholdWarningValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Critical Threshold</span>
+  <span class="metric-value" id="thresholdCriticalValue">0.000</span>
+</div>
+
+        <div class="metric-row">
+          <span class="metric-label">Momentum</span>
+          <span class="metric-value" id="momentumValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Phase Lag</span>
+          <span class="metric-value" id="lagValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Recovery Prob.</span>
+          <span class="metric-value" id="recoveryValue">--</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Expected Cycles</span>
+          <span class="metric-value" id="cyclesValue">--</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Urgency</span>
+          <span class="metric-value"><span class="status-pill" id="urgencyValue">STABLE</span></span>
+        </div>
+      </div>
+
+      <div class="metric-row">
+  <span class="metric-label">Regime</span>
+  <span class="metric-value"><span class="status-pill" id="regimeValue">baseline</span></span>
+</div>
+
+      <div class="panel">
+        <h2>Governor</h2>
+
+        <div class="metric-row">
+          <span class="metric-label">Action</span>
+          <span class="metric-value" id="actionValue">none</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Strength</span>
+          <span class="metric-value" id="strengthValue">0.00</span>
+        </div>
+
+        <div class="metric-row">
+  <span class="metric-label">Memory Bias</span>
+  <span class="metric-value" id="memoryBiasValue">0.00</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recovery Bias</span>
+  <span class="metric-value" id="recoveryBiasValue">0.00</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recovery Stance</span>
+  <span class="metric-value" id="recoveryStanceValue">baseline</span>
+</div>
+
+        <div class="metric-row">
+          <span class="metric-label">Intervene?</span>
+          <span class="metric-value" id="interveneValue">false</span>
+        </div>
+      </div>
+
+      <div class="hud-row">
+  <span class="hud-label">Field Remembers</span>
+  <span class="hud-value" id="fieldRemembersValue">false</span>
+</div>
+
+      <div class="panel">
+  <h2>Mapping Guide</h2>
+
+  <div class="legend-note"><strong>Source Sim → Recoverability</strong></div>
+  <div class="legend-note">Fear Level → raises Phase Lag, Disorder, Fragmentation</div>
+  <div class="legend-note">Poverty Rate → raises Disorder, lowers Capacity Offset</div>
+  <div class="legend-note">Legitimacy → lowers Fragmentation, raises Capacity Offset</div>
+  <div class="legend-note">Stability Avg → lowers Phase Lag, raises Capacity Offset</div>
+  <div class="legend-note">Harm Structures → raises Harm Pressure</div>
+  <div class="legend-note">Care Structures → indirectly improves resilience / adaptation</div>
+  <div class="legend-note">Field Remembers / Coherence → supports lower urgency and stronger recovery conditions</div>
+
+  <div style="height:10px;"></div>
+
+  <div class="legend-note"><strong>Recoverability meaning</strong></div>
+  <div class="legend-note">Disorder = field instability pressure</div>
+  <div class="legend-note">Fragmentation = social/system splitting pressure</div>
+  <div class="legend-note">Harm Pressure = structural harm load</div>
+  <div class="legend-note">Phase Lag = delayed field response</div>
+  <div class="legend-note">Capacity Offset = ability to recover / absorb shock</div>
+</div>
+
+
+    </aside>
+
+    <main class="center">
+      <div id="sim-holder"></div>
+    </main>
+
+    <aside class="sidebar right">
+      <div class="panel">
+        <h2>RDI Components</h2>
+
+        <div class="component-row">
+          <div class="component-head">
+            <span>Disorder</span>
+            <span id="compDisorderText">0.000</span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="compDisorderBar"></div></div>
+        </div>
+
+        <div class="component-row">
+          <div class="component-head">
+            <span>Fragmentation</span>
+            <span id="compFragmentationText">0.000</span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="compFragmentationBar"></div></div>
+        </div>
+
+        <div class="component-row">
+          <div class="component-head">
+            <span>Harm Pressure</span>
+            <span id="compHarmText">0.000</span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="compHarmBar"></div></div>
+        </div>
+
+        <div class="component-row">
+          <div class="component-head">
+            <span>Phase Lag</span>
+            <span id="compLagText">0.000</span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="compLagBar"></div></div>
+        </div>
+
+        <div class="component-row">
+          <div class="component-head">
+            <span>Capacity Offset</span>
+            <span id="compCapacityText">0.000</span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="compCapacityBar"></div></div>
+        </div>
+      </div>
+
+      
+
+<div class="panel">
+        <h2>Recovery Memory</h2>
+
+        <div class="metric-row">
+          <span class="metric-label">Resilience</span>
+          <span class="metric-value" id="memoryResilienceValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Fragility</span>
+          <span class="metric-value" id="memoryFragilityValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Adaptation Efficiency</span>
+          <span class="metric-value" id="memoryAdaptValue">0.000</span>
+        </div>
+      </div>
+
+      <div class="metric-row">
+  <span class="metric-label">Latest Recovery Quality</span>
+  <span class="metric-value" id="latestRecoveryQualityValue">--</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recent Recovery Avg</span>
+  <span class="metric-value" id="recentRecoveryAvgValue">--</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recovery Speed</span>
+  <span class="metric-value" id="latestRecoverySpeedValue">--</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recovery Stability</span>
+  <span class="metric-value" id="latestRecoveryStabilityValue">--</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Overshoot Control</span>
+  <span class="metric-value" id="latestRecoveryOvershootValue">--</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Intervention Efficiency</span>
+  <span class="metric-value" id="latestRecoveryCostValue">--</span>
+</div>
+
+      <div class="panel">
+        <h2>Forecast</h2>
+
+        <div class="metric-row">
+          <span class="metric-label">Predicted RDI Change</span>
+          <span class="metric-value" id="forecastDeltaValue">0.000</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Predicted RDI</span>
+          <span class="metric-value"><span class="status-pill" id="forecastRdiValue">0.000</span></span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Confidence</span>
+          <span class="metric-value"><span class="status-pill" id="forecastConfidenceValue">0%</span></span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-label">Lead Time</span>
+          <span class="metric-value" id="forecastLeadValue">0</span>
+        </div>
+      </div>
+
+      
+      <div class="panel">
+  <h2>Incoming Source Data</h2>
+
+  <div class="metric-row">
+    <span class="metric-label">Fear Level</span>
+    <span class="metric-value" id="sourceFearValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Poverty Rate</span>
+    <span class="metric-value" id="sourcePovertyValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Legitimacy</span>
+    <span class="metric-value" id="sourceLegitimacyValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Stability Avg</span>
+    <span class="metric-value" id="sourceStabilityValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Harm Structures</span>
+    <span class="metric-value" id="sourceHarmStructuresValue">0</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Care Structures</span>
+    <span class="metric-value" id="sourceCareStructuresValue">0</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Field Remembers</span>
+    <span class="metric-value" id="sourceFieldRemembersValue">false</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Civilization Support</span>
+    <span class="metric-value" id="sourceCivilizationSupportValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Avg Survivability</span>
+    <span class="metric-value" id="sourceAverageSurvivabilityValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Cooperation Gravity</span>
+    <span class="metric-value" id="sourceCooperationGravityValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Extraction Gravity</span>
+    <span class="metric-value" id="sourceExtractionGravityValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Halo Field</span>
+    <span class="metric-value" id="sourceHaloFieldValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+  <span class="metric-label">Sim Speed</span>
+  <span class="metric-value" id="sourceSimSpeedValue">1x</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Care Structures</span>
+  <span class="metric-value" id="sourceCareStructuresValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Harm Structures</span>
+  <span class="metric-value" id="sourceHarmStructuresValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Net Structure Support</span>
+  <span class="metric-value" id="sourceNetStructureSupportValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Mobility Threshold Effect</span>
+  <span class="metric-value" id="sourceMobilityThresholdEffectValue">0.000000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Calibration Up Threshold</span>
+  <span class="metric-value" id="sourceCalibrationUpThresholdValue">0.000000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Calibration Down Threshold</span>
+  <span class="metric-value" id="sourceCalibrationDownThresholdValue">0.000000</span>
+</div>
+
+  <div class="metric-row">
+    <span class="metric-label">Mobility Pressure</span>
+    <span class="metric-value" id="sourceMobilityPressureValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+  <span class="metric-label">Mobility Momentum</span>
+  <span class="metric-value" id="sourceMobilityMomentumValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Wealth Drift</span>
+  <span class="metric-value" id="sourceWealthDriftValue">0.0000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Mobility Readiness</span>
+  <span class="metric-value" id="sourceMobilityReadinessValue">0.0000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Sustained Readiness</span>
+  <span class="metric-value" id="sourceSustainedReadinessValue">0.0000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Real Wealth Delta</span>
+  <span class="metric-value" id="sourceRealWealthDeltaValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Shadow Wealth</span>
+  <span class="metric-value" id="sourceShadowWealthValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Shadow Gap</span>
+  <span class="metric-value" id="sourceShadowGapValue">0.000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Wealth Sync</span>
+  <span class="metric-value" id="sourceWealthSyncValue">0.00000000</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Real Sync Enabled</span>
+  <span class="metric-value" id="sourceRealSyncEnabledValue">false</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Class Mobility</span>
+  <span class="metric-value" id="sourceClassMobilityValue">false</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Class Test Mode</span>
+  <span class="metric-value" id="sourceClassTestModeValue">false</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Calibration Mode</span>
+  <span class="metric-value" id="sourceClassCalibrationModeValue">false</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Class Moves Up</span>
+  <span class="metric-value" id="sourceClassMovesUpValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Class Moves Down</span>
+  <span class="metric-value" id="sourceClassMovesDownValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Recent Class Moves</span>
+  <span class="metric-value" id="sourceRecentClassMovesValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Class Move Limit</span>
+  <span class="metric-value" id="sourceClassMoveLimitValue">0</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Rate Blocked</span>
+  <span class="metric-value" id="sourceRateBlockedValue">NO</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Upward Damping</span>
+  <span class="metric-value" id="sourceUpwardDampingValue">0.00</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Downward Damping</span>
+  <span class="metric-value" id="sourceDownwardDampingValue">0.00</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Upward Survival Gate</span>
+  <span class="metric-value" id="sourceUpwardSurvivabilityGateValue">0.00</span>
+</div>
+
+<div class="metric-row">
+  <span class="metric-label">Downward Survival Risk</span>
+  <span class="metric-value" id="sourceDownwardSurvivabilityRiskValue">0.00</span>
+</div>
+
+  <div class="metric-row">
+    <span class="metric-label">Healing</span>
+    <span class="metric-value" id="sourceHealingValue">0.000</span>
+  </div>
+
+  <div class="metric-row">
+    <span class="metric-label">Collaboration</span>
+    <span class="metric-value" id="sourceCollaborationValue">0.000</span>
+  </div>
+
+</div>
+    </aside>
+  </div>
+
+  <script src="/static/js/recoverability.js?v=field-remembers-status-v1"></script>
+
+  <!-- Cloudflare Web Analytics -->
+ <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bb060bd9efc5479f98276b92f55fb1d6"}'></script>
+ <!-- End Cloudflare Web Analytics -->
+
+</body>
+</html>

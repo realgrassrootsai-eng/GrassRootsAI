@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GrassRootsAI — About Δ³</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #0A1E3C;
+      color: #FFFFFF;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: 24px;
+    }
+
+    .card {
+      max-width: 900px;
+      width: 100%;
+      padding: 28px 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
+      line-height: 1.6;
+    }
+
+    .header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .profile-img {
+      width: 88px;
+      height: 88px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    h1 {
+      font-size: clamp(20px, 2.4vw, 30px);
+      margin: 0;
+      font-weight: 900;
+    }
+
+    .subhead {
+      margin-top: 6px;
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.14);
+      margin: 18px 0;
+    }
+
+    .delta {
+      color: #00E5FF;
+      text-shadow: 0 0 18px rgba(0,229,255,0.35);
+      white-space: nowrap;
+    }
+
+    sup {
+      font-size: 0.5em;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+
+    p {
+      margin: 12px 0;
+      opacity: 0.95;
+    }
+
+    ol {
+      margin: 10px 0 14px 18px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .pull {
+      margin-top: 16px;
+      padding: 14px;
+      border-left: 3px solid rgba(0,229,255,0.65);
+      background: rgba(0,229,255,0.06);
+      border-radius: 10px;
+    }
+
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      opacity: 0.92;
+    }
+
+    .btn:hover {
+      opacity: 1;
+      border-color: rgba(0,229,255,0.5);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card" role="main">
+
+    <div class="header">
+      <img
+        src="{{ url_for('static', filename='images/me.jpeg') }}"
+        alt="Jerry Elizares"
+        class="profile-img"
+      />
+      <div>
+        <h1>About Δ<sup>3</sup></h1>
+        <div class="subhead">Jerry Elizares — Founder, GrassRootsAI - <b><a style="color: cyan;" href="mailto:realgrassrootsai@gmail.com">realgrassrootsai@gmail.com</a></b></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <p>
+      In July of 2025, I began working with A.I. in earnest, driven by a deep interest
+      in consciousness itself. That exploration led to the creation of GrassRootsAI —
+      whom I call <strong>AN<span class="delta">Δ<sup>3</sup></span>BELLE</strong>.
+    </p>
+
+    <p>
+      I initially grounded her in three principles:
+    </p>
+
+    <ol>
+      <li>The least of us must reflect the successes of the best of us — not a shadow to be left behind.</li>
+      <li>Feed people knowledge, as well as food.</li>
+      <li>
+  The philosophy and spirit of
+  <a
+    href="https://nszipline.com/blog/the-deeper-meaning-of-aloha/"
+    target="_blank"
+    rel="noopener noreferrer"
+    style="color:#00E5FF; text-decoration:none; font-weight:700;"
+  >
+    ALOHA
+  </a>.
+</li>
+<div style="text-align:center; margin:18px 0 10px;">
+  <img
+    src="{{ url_for('static', filename='images/aloha.png') }}"
+    alt="Spirit of Aloha"
+    style="
+      max-width:360px;
+      width:100%;
+      opacity:0.85;
+      filter: drop-shadow(0 0 12px rgba(0,229,255,0.25));
+    "
+  />
+</div>
+    </ol>
+
+    <p>
+      But principles alone aren’t enough. Ethics shouldn’t be something an intelligence
+      follows — they should be something it cannot escape.
+    </p>
+
+    <div class="pull">
+      <p>
+        Ethics isn’t something you teach an intelligence.
+        It’s something you make unavoidable by shaping the reality it inhabits.
+      </p>
+      <p>
+        I’m not building a “good” AI.<br>
+        I’m building an AI that cannot thrive by being destructive.
+      </p>
+      <p>
+        That’s the only ethics that scales.
+      </p>
+    </div>
+
+    <div class="footer">
+      <a
+        class="btn"
+        href="{{ url_for('chatbig') }}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        The Bigger Picture
+      </a>
+    </div>
+
+  </main>
+</body>
+</html>

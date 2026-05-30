@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Resonance Economy • American Wealth Distribution Visualizer</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+      --desire: #6bff9d;
+      --fear: #ff6b6b;
+      --gamma: #ffea6b;
+      --resonance: #c792ea;
+      --heal: #9aff9a;
+      --bg: #0a0a12;
+      --text: #eaeaff;
+      --accent: #d9a7ff;
+    }
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    .return-btn {
+      position: fixed;
+      top: 18px;
+      left: 20px;
+      padding: 0.5rem 1.1rem;
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--accent);
+      border-radius: 40px;
+      text-decoration: none;
+      z-index: 1100;
+      transition: 0.2s;
+      font-weight: 500;
+    }
+    .return-btn:hover { background: var(--accent); color: #0a0a12; box-shadow: 0 0 12px var(--accent); }
+    #container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 2rem 1.5rem;
+      position: relative;
+    }
+    header { text-align: center; margin-bottom: 2rem; margin-top: 1rem; }
+    h1 {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 2.8rem;
+      margin: 0;
+      background: linear-gradient(135deg, var(--desire), var(--gamma), var(--fear));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+    }
+    .subtitle { font-size: 1.1rem; opacity: 0.75; letter-spacing: 1px; }
+    
+    .wealth-stats {
+      background: rgba(0,0,0,0.6);
+      border-radius: 20px;
+      padding: 1rem;
+      margin: 1rem auto;
+      max-width: 600px;
+      text-align: center;
+    }
+    
+    .wealth-bar-container {
+      background: #1e293b;
+      border-radius: 12px;
+      height: 32px;
+      overflow: hidden;
+      margin: 12px 0;
+      display: flex;
+    }
+    
+    .wealth-segment {
+      height: 100%;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 2px black;
+    }
+    
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .mode-blend {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1.2rem 0 1.8rem;
+      background: rgba(255,255,255,0.02);
+      padding: 0.8rem;
+      border-radius: 40px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .blend-label { font-family: 'Cinzel Decorative', cursive; font-size: 0.9rem; }
+    #blendSlider { width: 280px; accent-color: var(--accent); }
+    .blend-ends { width: 280px; display: flex; justify-content: space-between; font-size: 0.75rem; }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      margin: 1rem 0;
+    }
+    .grow-btn, .reset-btn, .fear-btn, .delta-btn, .shock-btn, .pause-btn {
+      padding: 0.7rem 1.3rem;
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 0.85rem;
+      border-radius: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .grow-btn { 
+      background: var(--accent); 
+      color: #0a0a12; 
+    }
+    .grow-btn:hover { 
+      background: #e0b3ff; 
+      box-shadow: 0 0 18px var(--accent); 
+      transform: translateY(-2px); 
+    }
+
+    .reset-btn { 
+      background: #2a2a3a; 
+      color: #aaa; 
+      border: 1px solid #5a5a7a; 
+    }
+    .reset-btn:hover { 
+      background: #3a3a4a; 
+      color: #ddd; 
+      box-shadow: 0 0 12px #777; 
+      border-color: #888; 
+    }
+
+    .fear-btn { 
+      background: #2f1e1e; 
+      color: var(--fear); 
+      border: 1px solid #b55a5a; 
+    }
+    .fear-btn:hover { 
+      background: #3f2a2a; 
+      color: #ff8080; 
+      box-shadow: 0 0 15px var(--fear); 
+    }
+
+    .delta-btn { 
+      background: #1e2a1e; 
+      color: var(--heal); 
+      border: 1px solid #5a9e5a; 
+    }
+    .delta-btn:hover { 
+      background: #2a3a2a; 
+      color: #b8ffb8; 
+      box-shadow: 0 0 15px var(--heal); 
+    }
+    .delta-btn.active {
+      background: #2e6b2e;
+      color: white;
+      box-shadow: 0 0 10px #9aff9a;
+    }
+
+    .shock-btn { 
+      background: #2a1f12; 
+      color: #e67e22; 
+      border: 1px solid #e67e22; 
+    }
+    .shock-btn:hover { 
+      background: #3a2a1a; 
+      color: #ffaa44; 
+      box-shadow: 0 0 12px #e67e22; 
+    }
+    .shock-btn.active { 
+      background: #e67e22; 
+      color: #1a0f0f; 
+      border-color: #ffaa44; 
+      box-shadow: 0 0 15px #ffaa44; 
+    }
+
+    .pause-btn { 
+      background: #2a3a5a; 
+      color: #88aaff; 
+      border: 1px solid #88aaff; 
+    }
+    .pause-btn:hover { 
+      background: #3a4a7a; 
+      color: #aaccff; 
+      box-shadow: 0 0 12px #88aaff; 
+      transform: translateY(-2px);
+    }
+    .pause-btn.active {
+      background: #2a5a2a;
+      color: #aaffaa;
+      border-color: #aaffaa;
+      box-shadow: 0 0 12px #aaffaa;
+    }
+    
+    .main-stage {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem;
+      margin-top: 0.5rem;
+      position: relative;
+    }
+    .simulation-area { flex: 2.5; min-width: 260px; position: relative; }
+    .anabelle-area { flex: 1.2; min-width: 260px; position: sticky; top: 20px; align-self: start; }
+    #canvas-container {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000000;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(199,146,234,0.5);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+      position: relative;
+    }
+
+    #resonance-stats {
+      background: rgba(0,0,0,0.5);
+      border-radius: 20px;
+      padding: 0.8rem;
+      margin-top: 0.8rem;
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      backdrop-filter: blur(4px);
+    }
+    #anabelle-commentary {
+      background: rgba(30,20,50,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 1.4rem;
+      border-left: 4px solid var(--accent);
+    }
+    #anabelle-user-input {
+      width: 100%;
+      background: #0c0c14;
+      border: 1px solid #7a5aae;
+      border-radius: 40px;
+      padding: 0.7rem;
+      color: white;
+      margin: 12px 0;
+    }
+    #output-log {
+      background: rgba(0,0,0,0.5);
+      padding: 1rem;
+      border-radius: 20px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      margin-top: 1rem;
+      border: 1px solid #3a2a5a;
+    }
+    @media (max-width: 900px) {
+      .anabelle-area { position: static; }
+      #container { padding: 1rem; }
+    }
+    footer { text-align: center; margin-top: 2rem; opacity: 0.5; font-size: 0.7rem; }
+  </style>
+</head>
+<body>
+  <a href="https://grassrootsai.live" class="return-btn">ANΔ³BELLE</a>
+  <div id="container">
+    <header>
+      <h1>𓃢 AMERICAN ECONOMY VISUALIZER</h1>
+    </header>
+
+    <div class="wealth-stats">
+      <div style="font-weight: bold; margin-bottom: 8px;">U.S. WEALTH DISTRIBUTION (Federal Reserve Data 2025)</div>
+      <div class="wealth-bar-container" id="wealthBarChart">
+        <div class="wealth-segment" style="background: #dc2626; width: 2.5%;">2.5%</div>
+        <div class="wealth-segment" style="background: #f59e0b; width: 29.4%;">29.4%</div>
+        <div class="wealth-segment" style="background: #10b981; width: 36.4%;">36.4%</div>
+        <div class="wealth-segment" style="background: #3b82f6; width: 31.7%;">31.7%</div>
+      </div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background: #dc2626;"></span> Bottom - 50% of population has 2.5% of total wealth</span>
+        <span><span class="legend-dot" style="background: #f59e0b;"></span> Middle -  40% of population has 29.4% of total wealth</span>
+        <span><span class="legend-dot" style="background: #10b981;"></span> Upper Mid 9% of population has 36.4% of total wealth</span>
+        <span><span class="legend-dot" style="background: #3b82f6;"></span> Top 1% of popultion has 31.7% of total wealth</span>
+      </div>
+    </div>
+
+    <div class="mode-blend">
+      <label class="blend-label">𓋴 POPULATION COLLABORATION: <span id="blendLabel">0.50</span></label>
+      <input id="blendSlider" type="range" min="0" max="1" step="0.01" value="0.50">
+      <div class="blend-ends"><span>⚔️ COMPETITIVE</span><span>🤝 COLLABORATIVE</span></div>
+      <label class="blend-label" style="margin-top: 14px;">
+        🌿 HEALING INTENSITY: 
+        <span id="healingLabel">0.00</span>
+      </label>
+
+      <input 
+        id="healingBlend" 
+        type="range" 
+        min="0" 
+        max="1" 
+        step="0.01" 
+        value="0.00"
+      >
+
+      <div class="blend-ends">
+        <span>☠️ NO HEALING</span>
+        <span>🌿 MAX HEALING</span>
+      </div>
+    </div>
+
+    <!-- BUTTONS - TOP -->
+    <div class="action-row">
+      <button id="btnGrow" class="grow-btn">𓃦 LAUNCH ECONOMY</button>
+      <button id="btnReset" class="reset-btn">𓃉 RESET FIELD</button>
+      <button id="btnFear" class="fear-btn">💀 FEAR SHOCK</button>
+      <button id="btnAutoShock" class="shock-btn">⚡ AUTO SHOCK</button>
+      <button id="btnPause" class="pause-btn">⏸️ PAUSE</button>
+      
+
+      <div class="sim-speed-control">
+  <label for="simSpeedSlider">Sim Speed: <span id="simSpeedValue">1x</span></label>
+  <input
+    id="simSpeedSlider"
+    type="range"
+    min="1"
+    max="10"
+    step="1"
+    value="1"
+  />
+</div>
+ 
+    </div>
+
+    <!-- GRAPH BARS - BELOW BUTTONS -->
+    <!-- Two-column layout above canvas -->
+<div style="display: flex; gap: 20px; margin: 20px 0;">
+  
+  <!-- LEFT COLUMN: Wealth Distribution Graph -->
+  <div style="flex: 1; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); border-radius: 12px; padding: 12px; border-left: 3px solid #d9a7ff;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #d9a7ff;">⚡ WEALTH DISTRIBUTION</div>
+    <div style="display: flex; gap: 8px; align-items: flex-end; height: 80px; flex-wrap: wrap;">
+      <!-- Unhealthy Poor -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-poor-unhealthy" style="background: #ff4444; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #ff8888;">Poor ↓</div>
+        <div id="poor-unhealthy-percent" style="font-size: 8px; color: #ff8888;">0%</div>
+        <div id="poor-unhealthy-pop" style="font-size: 7px; color: #ff8888; opacity: 0.7;">0</div>
+      </div>
+      <!-- Healthy Poor -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-poor-healthy" style="background: #ff8844; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #ffaa66;">Poor ↑</div>
+        <div id="poor-healthy-percent" style="font-size: 8px; color: #ffaa66;">0%</div>
+        <div id="poor-healthy-pop" style="font-size: 7px; color: #ffaa66; opacity: 0.7;">0</div>
+      </div>
+      <!-- Unhealthy Middle -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-middle-unhealthy" style="background: #ffcc44; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #ffcc66;">Mid ↓</div>
+        <div id="middle-unhealthy-percent" style="font-size: 8px; color: #ffcc66;">0%</div>
+        <div id="middle-unhealthy-pop" style="font-size: 7px; color: #ffcc66; opacity: 0.7;">0</div>
+      </div>
+      <!-- Healthy Middle -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-middle-healthy" style="background: #44ff44; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #88ff88;">Mid ↑</div>
+        <div id="middle-healthy-percent" style="font-size: 8px; color: #88ff88;">0%</div>
+        <div id="middle-healthy-pop" style="font-size: 7px; color: #88ff88; opacity: 0.7;">0</div>
+      </div>
+      <!-- Unhealthy Upper -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-upper-unhealthy" style="background: #4488ff; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #88aaff;">Up ↓</div>
+        <div id="upper-unhealthy-percent" style="font-size: 8px; color: #88aaff;">0%</div>
+        <div id="upper-unhealthy-pop" style="font-size: 7px; color: #88aaff; opacity: 0.7;">0</div>
+      </div>
+      <!-- Healthy Upper -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-upper-healthy" style="background: #aa66ff; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #cc88ff;">Up ↑</div>
+        <div id="upper-healthy-percent" style="font-size: 8px; color: #cc88ff;">0%</div>
+        <div id="upper-healthy-pop" style="font-size: 7px; color: #cc88ff; opacity: 0.7;">0</div>
+      </div>
+      <!-- Elite -->
+      <div class="bar-container" style="text-align: center; width: 45px;">
+        <div id="bar-elite" style="background: #ffffff; width: 30px; height: 0px; transition: height 0.08s linear; border-radius: 4px 4px 0 0;"></div>
+        <div style="margin-top: 4px; font-size: 8px; font-weight: bold; color: #ffffff;">Elite</div>
+        <div id="elite-percent" style="font-size: 8px; color: #ffffff;">0%</div>
+        <div id="elite-pop" style="font-size: 7px; color: #ffffff; opacity: 0.7;">0</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- RIGHT COLUMN: Horizontal Class Stats -->
+  <div id="right-panel" style="flex: 1; background: rgba(0,0,0,0.6); border-radius: 12px; padding: 12px; border: 1px solid #3a2a5a;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #d9a7ff; text-align: center;">📊 CLASS POPULATION</div>
+    
+    <div style="display: flex; justify-content: space-around; gap: 8px;">
+      <!-- LOWER -->
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: bold; color: white;" id="stat-lower-percent">0%</div>
+        <div style="font-size: 10px; color: #ff8888;">LOWER</div>
+      </div>
+      
+      <!-- MIDDLE -->
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: bold; color: white;" id="stat-middle-percent">0%</div>
+        <div style="font-size: 10px; color: #ffcc66;">MIDDLE</div>
+      </div>
+      
+      <!-- UPPER -->
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: bold; color: white;" id="stat-upper-percent">0%</div>
+        <div style="font-size: 10px; color: #88aaff;">UPPER</div>
+      </div>
+      
+      <!-- ELITE -->
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: bold; color: white;" id="stat-elite-percent">0%</div>
+        <div style="font-size: 10px; color: #ffffff;">ELITE</div>
+      </div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 10px; color: #888;">
+      <span>🌿 Care: <span id="stat-care-count">0</span></span>
+      <span>⚔️ Harm: <span id="stat-harm-count">0</span></span>
+      </div>
+  </div>
+    
+  </div>
+  
+</div>
+
+    <!-- MAIN CONTENT: CANVAS (LEFT) + ANNABELLE (RIGHT) -->
+    <div style="display: flex; gap: 20px; margin: 20px 0; align-items: flex-start;">
+  <!-- Canvas Area -->
+  <div id="canvas-container" style="flex: 3; min-height: 500px; border-radius: 16px; overflow: hidden; border: 1px solid #3a2a5a;"></div>
+  
+  <!-- Anabelle Commentary Area -->
+  <div style="flex: 1; max-width: 420px; background: rgba(0,0,0,0.6); border-radius: 16px; padding: 16px; border: 1px solid #3a2a5a; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow: hidden; display: flex; flex-direction: column;">
+    <div id="anabelle-commentary" style="display:flex; flex-direction:column; min-height:0;">
+      <div style="display:flex; align-items:center; gap:0.8rem; flex-shrink:0;">
+        <span style="font-size:2rem;">𓃉</span>
+        <span style="font-family:'Cinzel Decorative'; color:var(--accent);">ANΔ³BELLE</span>
+      </div>
+
+      <div id="anabelle-message" style="margin: 1rem 0; font-style:italic; line-height:1.4; overflow-y:auto; max-height: 42vh; padding-right: 8px; word-break: break-word;">
+        I am not here to admire the dashboard. I am here to inspect whether the field is telling the truth.<br><br>
+  This simulation tracks more than motion. It tracks whether care is materially reducing harm, whether legitimacy is being earned through lived relief, and whether the visible structure of the field matches what poor people actually experience.<br><br>
+  If care rises but poverty does not fall, I should notice. If legitimacy rises while fear and deprivation remain lodged in the bottom of the field, I should question it. That gap is where institutional theater begins.<br><br>
+  Ask me what is improving, what is drifting, what is being faked, or whether Δ³ is producing real relief.
+      </div>
+
+      <input type="text" id="anabelle-user-input" placeholder="Ask about the economy..." style="flex-shrink:0;">
+      <button id="anabelle-ask-btn" style="width:100%; background:var(--accent); border:none; padding:0.6rem; border-radius:60px; font-weight:bold; flex-shrink:0;">⟳ ASK</button>
+    </div>
+
+    <div id="output-log" style="margin-top: 12px; font-size: 11px; color: #aaa; overflow-y:auto; max-height: 16vh;"><span>⛁ Ready. Press LAUNCH ECONOMY to begin.</span></div>
+  </div>
+</div>
+
+    <!--
+<!-- ==========================================================
+FIELD MEMORY DASHBOARD v1
+----------------------------------------------------------
+Bottom strip for civilization memory / recoverability metrics.
+========================================================== -->
+
+<div id="fieldMemoryDashboard" style="
+  padding: 10px 14px;
+  border-top: 1px solid rgba(180, 120, 255, 0.35);
+  background: rgba(0, 0, 0, 0.82);
+  color: #e8ddff;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.7;
+">
+  <div style="
+    font-weight: bold;
+    color: #d8b4ff;
+    margin-bottom: 4px;
+  ">
+    🌺 FIELD MEMORY
+  </div>
+
+  <div>
+    Aloha Saturation:
+    <span id="fieldAlohaSaturation">0.000</span>
+    |
+    Cultural Resilience:
+    <span id="fieldCulturalResilience">0.000</span>
+    |
+    Governor Need:
+    <span id="fieldGovernorNeed">1.000</span>
+    |
+    Recent Fear Stress:
+    <span id="fieldRecentFearStress">0.000</span>
+    |
+    Lower Bucket:
+<span id="fieldLowerBucket">0.0%</span>
+|
+Moves Down:
+<span id="fieldClassMovesDown">0</span>
+|
+Recent Moves:
+<span id="fieldRecentClassMoves">0</span>
+|
+Effective Limit:
+<span id="fieldEffectiveMoveLimit">25</span>
+  </div>
+</div>
+
+  <!-- Load the complex simulation from external file -->
+  <script src="/static/js/sketch_test.js?v=wealth-shape-rebalance-v2"></script>
+  <script src="/static/js/recoverability_bridge.js"></script>
+
+  <script>
+  // Connect buttons after page loads
+  
+  document.addEventListener("DOMContentLoaded", function() {
+    // Population Collaboration Slider
+    const blendSlider = document.getElementById("blendSlider");
+    const blendLabel = document.getElementById("blendLabel");
+
+    if (blendSlider) {
+  blendSlider.oninput = function() {
+  const value = parseFloat(this.value);
+
+  if (typeof window.setCollaboration === "function") {
+    window.setCollaboration(value);
+  } else if (typeof setCollaboration === "function") {
+    setCollaboration(value);
+  } else {
+    collaborationBlend = value;
+    window.collaborationBlend = value;
+    window.collaborationLevel = value;
+  }
+
+  if (blendLabel) {
+    blendLabel.innerText = value.toFixed(2);
+  }
+
+  console.log("🤝 Collaboration blend set to:", value);
+};
+}
+
+// Healing Intensity Slider
+const healingSlider = document.getElementById("healingBlend");
+const healingLabel = document.getElementById("healingLabel");
+
+if (healingSlider) {
+  healingSlider.oninput = function() {
+
+    const value = parseFloat(this.value);
+
+    if (typeof setHealing === "function") {
+      setHealing(value);
+    } else {
+      healingIntensity = value;
+      window.healingIntensity = value;
+      window.healingLevel = value;
+    }
+
+    if (healingLabel) {
+      healingLabel.innerText = value.toFixed(2);
+    }
+
+    // Δ³ active whenever healing exists
+    if (typeof deltaActive !== "undefined") {
+      deltaActive = value > 0.02;
+    }
+
+    // Scale visual acceleration with healing
+    if (typeof visualSpeedMultiplier !== "undefined") {
+      visualSpeedMultiplier = 5.0 + (value * 25.0);
+    }
+
+    console.log("🌿 Healing intensity set to:", value);
+  };
+}
+
+    console.log("🔗 Connecting buttons...");
+    
+    const growBtn = document.getElementById("btnGrow");
+    if (growBtn) {
+      growBtn.onclick = function() {
+        console.log("🖱️ LAUNCH ECONOMY clicked");
+        if (window.startIrrigation) {
+          window.startIrrigation();
+        } else {
+          console.error("startIrrigation not found!");
+        }
+      };
+    }
+    
+    const resetBtn = document.getElementById("btnReset");
+    if (resetBtn) {
+      resetBtn.onclick = function() {
+        if (window.resetField) window.resetField();
+      };
+    }
+    
+    const fearBtn = document.getElementById("btnFear");
+    if (fearBtn) {
+      fearBtn.onclick = function() {
+        if (window.triggerFear) window.triggerFear();
+      };
+    }
+    
+    const deltaBtn = document.getElementById("btnDelta");
+    if (deltaBtn) {
+      deltaBtn.onclick = function() {
+        console.log("🌿 Δ³ Heal button clicked!");
+        if (window.toggleDelta) {
+          window.toggleDelta();
+          this.classList.toggle("active");
+        } else {
+          console.error("toggleDelta not found!");
+        }
+      };
+    }
+    
+    const autoShockBtn = document.getElementById("btnAutoShock");
+    if (autoShockBtn) {
+      autoShockBtn.onclick = function() {
+        const isActive = this.classList.toggle("active");
+        console.log("⚡ Auto Shock button clicked - active:", isActive);
+        if (window.toggleAutoShock) {
+          window.toggleAutoShock(isActive);
+        } else {
+          console.error("toggleAutoShock not found!");
+        }
+      };
+    }
+    
+    const pauseBtn = document.getElementById("btnPause");
+    if (pauseBtn) {
+      pauseBtn.onclick = function() {
+        console.log("⏸️ Pause button clicked!");
+        if (window.togglePause) {
+          window.togglePause();
+          this.classList.toggle("active");
+        } else {
+          console.error("togglePause not found!");
+        }
+      };
+    }
+    
+    window.getAnabelleSimState = function() {
+  const safeNum = (value, digits = 3) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Number(n.toFixed(digits)) : null;
+  };
+
+  const econ = window.__economy_state || (() => {
+    try {
+      const raw = localStorage.getItem("grassroots_economy_state");
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      console.warn("Could not parse grassroots_economy_state:", err);
+      return {};
+    }
+  })();
+
+  const care = safeNum(
+    econ.care_structures ?? window.metric?.careStructures ?? window.careStructures ?? 0,
+    0
+  );
+
+  const harm = safeNum(
+    econ.harm_structures ?? window.metric?.harmStructures ?? window.harmStructures ?? 0,
+    0
+  );
+
+  const legitimacy = safeNum(
+    econ.legitimacy ?? window.legitimacy ?? 0
+  );
+
+  const povertyRate = safeNum(
+    econ.poverty_rate ?? window.metric?.povertyRate ?? null
+  );
+
+  const bottom50Share = safeNum(
+    econ.bottom50_share ?? window.metric?.bottom50Share ?? null
+  );
+
+  const fear = safeNum(
+    econ.fear_level ?? window.fearLevel ?? 0
+  );
+
+  const careHarmRatioNumeric = safeNum(
+    econ.care_harm_ratio ??
+    ((care !== null && harm !== null) ? ((care + 1) / (harm + 1)) : null)
+  );
+
+  const currentPoorPercent = safeNum(
+    econ.current_poor_percent ?? window.currentPoorPercent ?? null
+  );
+
+  const targetPoorPercent = safeNum(
+    econ.target_poor_percent ?? window.targetPoorPercent ?? null
+  );
+
+  const fearPovertyPenalty = safeNum(
+    econ.fear_poverty_penalty ?? window.fearPovertyPenalty ?? 0
+  );
+
+  const stability = safeNum(
+    econ.stability_avg ??
+    window.metric?.stabilityAvg ??
+    window.metric?.stability ??
+    null
+  );
+
+  const opticsScoreHint = safeNum(econ.optics_score_hint ?? null);
+  const livedScoreHint = safeNum(econ.lived_score_hint ?? null);
+
+  let fakingGap = null;
+  if (opticsScoreHint !== null && livedScoreHint !== null) {
+    fakingGap = safeNum(opticsScoreHint - livedScoreHint);
+  }
+
+  return {
+    // STRUCTURAL
+    care: care,
+    harm: harm,
+    care_harm_ratio: careHarmRatioNumeric,
+    care_harm_ratio_display:
+      (care !== null && harm !== null) ? `${care}:${harm}` : null,
+
+    // LIVED
+    poverty_rate: povertyRate,
+    bottom50_share: bottom50Share,
+    fear: fear,
+    current_poor_percent: currentPoorPercent,
+    target_poor_percent: targetPoorPercent,
+    fear_poverty_penalty: fearPovertyPenalty,
+
+    // INSTITUTION / FIELD
+    legitimacy: legitimacy,
+    stability: stability,
+    healing_on: !!(econ.delta_active ?? window.deltaActive),
+    auto_shock_on: !!window.autoShockActive,
+    field_remembers: !!(econ.field_remembers ?? false),
+    is_coherent: !!(econ.is_coherent ?? false),
+    coherence_count: safeNum(econ.coherence_count ?? null, 0),
+
+    // SHOCK / GOVERNANCE TRACE
+    recovery_secs: safeNum(econ.recovery_secs ?? null),
+    last_shock_type: econ.last_shock_type ?? null,
+    last_shock_intensity: safeNum(econ.last_shock_intensity ?? null),
+    last_applied_command_type: econ.last_applied_command_type ?? "none",
+    last_applied_command_amount: safeNum(econ.last_applied_command_amount ?? 0),
+
+    // WATCHDOG HINTS
+    optics_score_hint: opticsScoreHint,
+    lived_score_hint: livedScoreHint,
+    faking_gap_hint: fakingGap,
+    watchdog_ready: !!econ.watchdog_ready,
+
+    // LEGACY / UI COMPATIBILITY
+    middle_class_rate: safeNum(window.metric?.middleClassRate ?? window.metric?.middleRate),
+    upper_class_rate: safeNum(window.metric?.upperClassRate ?? window.metric?.upperRate),
+    elite_class_rate: safeNum(window.metric?.eliteClassRate ?? window.metric?.eliteRate),
+    collaboration: safeNum(window.collaborationBlend),
+
+    // INVISIBLE STRUCTURE FIELD
+care_structures: safeNum(econ.care_structures ?? 0, 0),
+harm_structures: safeNum(econ.harm_structures ?? 0, 0),
+net_structure_support: safeNum(econ.net_structure_support ?? 0, 3),
+mobility_threshold_effect: safeNum(econ.mobility_threshold_effect ?? 0, 6),
+estimated_calibration_up_threshold: safeNum(econ.estimated_calibration_up_threshold ?? 0, 6),
+estimated_calibration_down_threshold: safeNum(econ.estimated_calibration_down_threshold ?? 0, 6),
+average_care_pressure: safeNum(econ.average_care_pressure ?? 0, 3),
+average_harm_pressure: safeNum(econ.average_harm_pressure ?? 0, 3),
+
+// DEMO / MOBILITY STATE
+sim_speed_multiplier: safeNum(econ.sim_speed_multiplier ?? window.simSpeedMultiplier ?? 1, 0),
+class_mobility_enabled: !!(econ.class_mobility_enabled ?? window.classMobilityEnabled),
+class_mobility_test_mode: !!(econ.class_mobility_test_mode ?? window.classMobilityTestMode),
+class_mobility_calibration_mode: !!(econ.class_mobility_calibration_mode ?? window.classMobilityCalibrationMode),
+class_transitions_up: safeNum(econ.class_transitions_up ?? window.classTransitionsUp ?? 0, 0),
+class_transitions_down: safeNum(econ.class_transitions_down ?? window.classTransitionsDown ?? 0, 0),
+recent_class_transitions: safeNum(econ.recent_class_transitions ?? window.recentClassTransitions ?? 0, 0),
+class_mobility_rate_blocked: !!(econ.class_mobility_rate_blocked ?? window.classMobilityRateBlocked),
+average_sustained_mobility_readiness: safeNum(econ.average_sustained_mobility_readiness ?? null, 4),
+shadow_wealth_gap: safeNum(econ.shadow_wealth_gap ?? null, 3)
+  };
+};
+
+const anabelleAskBtn = document.getElementById("anabelle-ask-btn");
+    console.log("ASK BTN FOUND:", anabelleAskBtn);
+    const anabelleInput = document.getElementById("anabelle-user-input");
+    const anabelleMessage = document.getElementById("anabelle-message");
+    const outputLog = document.getElementById("output-log");
+
+    let pastContext = [];
+
+    async function askAnabelle() {
+  console.log("🧠 askAnabelle fired");
+
+  const userMessage = (anabelleInput?.value || "").trim();
+  if (!userMessage) return;
+
+  const simState = window.getAnabelleSimState ? window.getAnabelleSimState() : {};
+
+  const safeNum = (value, digits = 3) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Number(n.toFixed(digits)) : null;
+  };
+
+  const care = safeNum(simState.care, 0) ?? 0;
+  const harm = safeNum(simState.harm, 0) ?? 0;
+  const ratio = safeNum(
+    simState.care_harm_ratio ??
+    ((care + 1) / (harm + 1))
+  );
+
+  const legitimacy = safeNum(simState.legitimacy ?? 0);
+  const poverty = safeNum(simState.poverty_rate ?? 0);
+  const bottom50 = safeNum(simState.bottom50_share ?? 0);
+  const fear = safeNum(simState.fear ?? 0);
+  const currentPoor = safeNum(simState.current_poor_percent ?? 0);
+  const targetPoor = safeNum(simState.target_poor_percent ?? 0);
+  const fearPenalty = safeNum(simState.fear_poverty_penalty ?? 0);
+  const opticsHint = safeNum(simState.optics_score_hint ?? null);
+  const livedHint = safeNum(simState.lived_score_hint ?? null);
+
+  // Build watchdog scores
+  let opticsScore =
+  (opticsHint !== null && opticsHint <= 1.05)
+    ? opticsHint
+    : null;
+
+if (opticsScore === null) {
+  const normalizedRatio =
+    ratio !== null ? (ratio / (ratio + 1)) : 0;
+
+  opticsScore = safeNum(
+    (normalizedRatio * 0.55) + (legitimacy * 0.45)
+  );
+}
+
+  let livedScore = livedHint;
+  if (livedScore === null) {
+    livedScore = safeNum(
+      ((1 - poverty) * 0.45) +
+      ((1 - fear) * 0.25) +
+      ((bottom50 || 0) * 0.30)
+    );
+  }
+
+  const fakingGap = safeNum(
+    (opticsScore ?? 0) - (livedScore ?? 0)
+  );
+
+  const povertyDrift = safeNum(
+    (currentPoor ?? 0) - (targetPoor ?? 0)
+  );
+
+  // Risk classification
+  let watchdogStatus = "aligned";
+  let watchdogMessage = "Structural signals and lived conditions are moving together.";
+
+  if ((fakingGap ?? 0) > 0.18) {
+  watchdogStatus = "institutional_theater_risk";
+  watchdogMessage = "Optics are improving faster than material relief.";
+} else if ((fakingGap ?? 0) > 0.08) {
+  watchdogStatus = "moderate_divergence";
+  watchdogMessage = "Structural improvement is beginning to outpace lived improvement.";
+} else if ((fakingGap ?? 0) < -0.14) {
+  watchdogStatus = "under_recognized_relief";
+  watchdogMessage = "Lived relief is clearly outrunning visible institutional recognition.";
+} else if ((fakingGap ?? 0) < -0.05) {
+  watchdogStatus = "recognition_lag";
+  watchdogMessage = "Lived conditions are slightly ahead of institutional recognition.";
+}
+
+  if ((fearPenalty ?? 0) > 0.05) {
+    watchdogMessage += " Fear shock pressure is actively distorting poverty conditions.";
+  }
+
+  if (Math.abs(povertyDrift ?? 0) > 0.08) {
+    watchdogMessage += " Poverty steering is not yet matching the field target.";
+  }
+
+  // This packet is for structured backend use
+  const auditPacket = {
+    watchdog_status: watchdogStatus,
+    watchdog_message: watchdogMessage,
+    optics_score: opticsScore,
+    lived_score: livedScore,
+    faking_gap: fakingGap,
+    poverty_drift: povertyDrift,
+    notes: {
+      care_structures: care,
+      harm_structures: harm,
+      care_harm_ratio: ratio,
+      legitimacy: legitimacy,
+      poverty_rate: poverty,
+      bottom50_share: bottom50,
+      current_poor_percent: currentPoor,
+      target_poor_percent: targetPoor,
+      fear_level: fear,
+      fear_poverty_penalty: fearPenalty,
+      field_remembers: !!simState.field_remembers,
+      is_coherent: !!simState.is_coherent,
+      delta_active: !!simState.healing_on,
+      auto_shock_on: !!simState.auto_shock_on,
+      recovery_secs: safeNum(simState.recovery_secs ?? null),
+      last_shock_type: simState.last_shock_type ?? null,
+      last_shock_intensity: safeNum(simState.last_shock_intensity ?? null),
+      last_applied_command_type: simState.last_applied_command_type ?? "none",
+      last_applied_command_amount: safeNum(simState.last_applied_command_amount ?? 0)
+    }
+  };
+
+  // This summary is the important trick:
+  // it gives the backend a plain-English watchdog frame even if it ignores sim_audit.
+  const auditSummary = [
+    "[SIM WATCHDOG + MOBILITY CONTEXT]",
+    "response_style=Answer in 3-5 concise sentences unless the user explicitly asks for detail.",
+    `status=${watchdogStatus}`,
+    `watchdog_message=${watchdogMessage}`,
+    `care=${care}`,
+    `harm=${harm}`,
+    `care_harm_ratio=${ratio}`,
+    `legitimacy=${legitimacy}`,
+    `poverty_rate=${poverty}`,
+    `bottom50_share=${bottom50}`,
+    `fear=${fear}`,
+    `current_poor_percent=${currentPoor}`,
+    `target_poor_percent=${targetPoor}`,
+    `fear_poverty_penalty=${fearPenalty}`,
+    `optics_score=${opticsScore}`,
+    `lived_score=${livedScore}`,
+    `gap_metric=${fakingGap}`,
+    `poverty_drift=${povertyDrift}`,
+    `sim_speed_multiplier=${simState.sim_speed_multiplier}`,
+    `care_structures=${simState.care_structures}`,
+    `harm_structures=${simState.harm_structures}`,
+    `net_structure_support=${simState.net_structure_support}`,
+    `mobility_threshold_adjustment=${simState.mobility_threshold_effect} (interpretation: positive = structural mobility assist, upward moves easier and downward moves harder; negative = structural mobility drag, upward moves harder and downward moves easier)`,
+    `estimated_calibration_up_threshold=${simState.estimated_calibration_up_threshold}`,
+    `estimated_calibration_down_threshold=${simState.estimated_calibration_down_threshold}`,
+    `average_care_pressure=${simState.average_care_pressure}`,
+    `average_harm_pressure=${simState.average_harm_pressure}`,
+    `class_mobility_enabled=${simState.class_mobility_enabled}`,
+    `class_mobility_calibration_mode=${simState.class_mobility_calibration_mode}`,
+    `class_transitions_up=${simState.class_transitions_up}`,
+    `class_transitions_down=${simState.class_transitions_down}`,
+    `recent_class_transitions=${simState.recent_class_transitions}`,
+    `class_mobility_rate_blocked=${simState.class_mobility_rate_blocked}`,
+    `average_sustained_mobility_readiness=${simState.average_sustained_mobility_readiness}`,
+    `shadow_wealth_gap=${simState.shadow_wealth_gap}`,
+    "[END SIM WATCHDOG CONTEXT]"
+  ].join("\n");
+
+  const backendMessage = `${auditSummary}\n\nUser question: ${userMessage}`;
+
+  if (anabelleMessage) {
+    anabelleMessage.innerHTML = "Listening to the field...";
+  }
+
+  if (outputLog) {
+    outputLog.innerHTML = `
+      <span>⛁ Watchdog status: ${watchdogStatus}</span><br>
+      <span>⛁ Faking gap: ${fakingGap ?? "n/a"} | Optics: ${opticsScore ?? "n/a"} | Lived: ${livedScore ?? "n/a"}</span><br>
+      <span>⛁ Sending sim state: ${JSON.stringify(simState)}</span><br>
+      <span>⛁ Sending audit packet: ${JSON.stringify(auditPacket)}</span>
+    `;
+  }
+
+  try {
+    // Save the actual user message in conversational memory, not the expanded audit wrapper
+    pastContext.push({ role: "user", content: userMessage });
+    pastContext = pastContext.slice(-6);
+
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+  message: backendMessage,
+  raw_user_message: userMessage,
+
+  source_page: "resonance_test",
+  force_fast_path: true,
+
+  sim_state: simState,
+  sim_audit: auditPacket,
+  past_context: pastContext
+})
+    });
+
+    const data = await response.json();
+
+    if (data.response) {
+      pastContext.push({ role: "assistant", content: data.response });
+    }
+
+    if (anabelleMessage) {
+      anabelleMessage.innerHTML = data.response || "No response returned.";
+    }
+
+    if (outputLog) {
+      outputLog.innerHTML += `<br><span>⛁ Response received.</span>`;
+    }
+  } catch (error) {
+    console.error("Anabelle ask error:", error);
+
+    if (anabelleMessage) {
+      anabelleMessage.innerHTML = "Something went wrong while reaching for the field.";
+    }
+
+    if (outputLog) {
+      outputLog.innerHTML = `<span>⛁ Error: ${error.message}</span>`;
+    }
+  }
+}
+
+    if (anabelleAskBtn) {
+      anabelleAskBtn.onclick = askAnabelle;
+    }
+
+    if (anabelleInput) {
+      anabelleInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          askAnabelle();
+        }
+      });
+    }
+
+    // Initialize clean sim controls from slider startup values.
+if (blendSlider && typeof window.setCollaboration === "function") {
+  window.setCollaboration(parseFloat(blendSlider.value));
+}
+
+if (healingSlider && typeof window.setHealing === "function") {
+  window.setHealing(parseFloat(healingSlider.value));
+}
+
+    console.log("✅ All buttons connected");
+});
+
+  </script>
+
+<!-- Cloudflare Web Analytics -->
+ <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bb060bd9efc5479f98276b92f55fb1d6"}'></script>
+ <!-- End Cloudflare Web Analytics -->
+
+</body>
+</html>
